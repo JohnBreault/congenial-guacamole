@@ -6,10 +6,23 @@
 param vnetIpPrefixes array = [
   '10.10.10.0/24'
 ]
-param subnetName string = 'default'
 
-@description('Virtual Network')
-param subnetPrefix string = '10.10.10.0/25'
+@description('''subnet prefix example:
+  [
+    {
+      "name": "subnet1",
+      "prefix": "10.10.10.0/25"
+    },
+    {
+      "name": "subnet2",
+      "prefix": 10.10.10.128/25"
+    }
+  ]
+   ''')
+param subnetArray array = []
+
+// @description('Virtual Network')
+// param subnetPrefix string = '10.10.10.0/25'
 
 param vnetName string = 'default'
 param vnetLocation string = resourceGroup().location
@@ -27,11 +40,10 @@ resource vnetCreate 'Microsoft.Network/virtualNetworks@2023-04-01' = {
     addressSpace: {
       addressPrefixes: vnetIpPrefixes
     }
-    subnets: [
-      {
-        name: subnetName
+    subnets: [for subnet in subnetArray: {
+        name: subnet.name
         properties: {
-          addressPrefix: subnetPrefix
+          addressPrefix: subnet.prefix
           routeTable: ((!empty(routeTableId)) ? { // if routeTableId is not empty, then create a routeTable object
             id:  routeTableId
           }: null)
@@ -43,3 +55,5 @@ resource vnetCreate 'Microsoft.Network/virtualNetworks@2023-04-01' = {
     ]
   }
 }
+
+output vnetId string = vnetCreate.id
